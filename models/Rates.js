@@ -1,5 +1,3 @@
-// models/Rates.js
-
 const mongoose = require('mongoose');
 
 const RatesSchema = new mongoose.Schema(
@@ -16,13 +14,14 @@ const RatesSchema = new mongoose.Schema(
                 default: 0,
             },
         },
+        // --- CHANGE: Updated silverRate schema to match goldRate structure ---
         silverRate: {
-            fine: {
+            twentyTwoCarat: {
                 type: Number,
                 required: true,
                 default: 0,
             },
-            sterling: {
+            twentyFourCarat: {
                 type: Number,
                 required: true,
                 default: 0,

@@ -1,5 +1,3 @@
-// routes/rates.js
-
 const router = require('express').Router();
 const Rates = require('../models/Rates');
 const { verifyTokenAndAdmin } = require('../middleware/verifyToken');
@@ -9,6 +7,7 @@ router.get("/", async (req, res) => {
     try {
         let rates = await Rates.findOne();
         if (!rates) {
+            // If no rates document exists, create one with default values
             rates = await new Rates().save();
         }
         res.status(200).json(rates);
@@ -17,7 +16,7 @@ router.get("/", async (req, res) => {
     }
 });
 
-// UPDATE RATES (Admin Only) - MODIFIED FOR BOTH GOLD AND SILVER
+// UPDATE RATES (Admin Only)
 router.put("/update", verifyTokenAndAdmin, async (req, res) => {
     try {
         // Prepare the complete update object from the request body
@@ -26,9 +25,10 @@ router.put("/update", verifyTokenAndAdmin, async (req, res) => {
                 twentyTwoCarat: req.body.goldRate.twentyTwoCarat,
                 twentyFourCarat: req.body.goldRate.twentyFourCarat,
             },
+            // --- CHANGE: Updated to read 22K and 24K values for silver ---
             silverRate: {
-                fine: req.body.silverRate.fine,
-                sterling: req.body.silverRate.sterling,
+                twentyTwoCarat: req.body.silverRate.twentyTwoCarat,
+                twentyFourCarat: req.body.silverRate.twentyFourCarat,
             },
         };
 
