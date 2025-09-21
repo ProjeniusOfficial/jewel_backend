@@ -7,9 +7,8 @@ const cors = require('cors');
 
 // --- Route Imports ---
 const authRoute = require('./routes/auth');
-const ratesRoute = require('./routes/rates'); // Import the new rates route
+const ratesRoute = require('./routes/rates');
 
-// ... (Database connection and other middlewares are the same)
 // --- Initializations ---
 const app = express();
 dotenv.config();
@@ -23,12 +22,18 @@ mongoose
     });
 
 // --- Middlewares ---
-app.use(cors());
+// --- CHANGE: Made CORS configuration more explicit ---
+// This ensures that all origins and methods (GET, POST, PUT, etc.) are allowed.
+app.use(cors({
+  origin: "*", // Allow requests from any origin
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Allow all standard methods
+}));
+
 app.use(express.json());
 
 // --- Route Middlewares ---
 app.use('/api/auth', authRoute);
-app.use('/api/rates', ratesRoute); // Tell the app to use the rates route
+app.use('/api/rates', ratesRoute);
 
 // --- Start the Server ---
 const PORT = process.env.PORT || 5000;
