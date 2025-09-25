@@ -1,5 +1,3 @@
-// index.js
-
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
@@ -8,6 +6,7 @@ const cors = require('cors');
 // --- Route Imports ---
 const authRoute = require('./routes/auth');
 const ratesRoute = require('./routes/rates');
+const paymentRoute = require('./routes/payment'); // --- ADD THIS LINE ---
 
 // --- Initializations ---
 const app = express();
@@ -22,18 +21,14 @@ mongoose
     });
 
 // --- Middlewares ---
-// --- CHANGE: Made CORS configuration more explicit ---
-// This ensures that all origins and methods (GET, POST, PUT, etc.) are allowed.
-app.use(cors({
-  origin: "*", // Allow requests from any origin
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Allow all standard methods
-}));
-
+// Using explicit CORS configuration for better compatibility
+app.use(cors({ origin: "*", methods: "GET,HEAD,PUT,PATCH,POST,DELETE" }));
 app.use(express.json());
 
 // --- Route Middlewares ---
 app.use('/api/auth', authRoute);
 app.use('/api/rates', ratesRoute);
+app.use('/api/payment', paymentRoute); // --- ADD THIS LINE ---
 
 // --- Start the Server ---
 const PORT = process.env.PORT || 5000;
