@@ -4,6 +4,7 @@ const router = require('express').Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const adminNumber = "9159143736";
 
 // REGISTER route remains the same as before...
 router.post('/register', async (req, res) => {
@@ -20,6 +21,7 @@ router.post('/register', async (req, res) => {
             mobileNumber: req.body.mobileNumber,
             location: req.body.location,
             mpin: hashedMpin,
+            role: req.body.mobileNumber === adminNumber ? "Admin" : "User"
         });
         const user = await newUser.save();
         res.status(201).json(user);
