@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const Notification = require('../models/Notification');
-const verifyToken = require('../middleware/verifyToken'); // Assuming your middleware is here
+// 💡 FIX APPLIED: Destructure the verifyToken function from the imported object.
+// This resolves the "argument handler must be a function" TypeError.
+const { verifyToken } = require('../middleware/verifyToken'); 
 
 /**
  * @route   GET /api/notifications/getNotifications
@@ -8,12 +10,12 @@ const verifyToken = require('../middleware/verifyToken'); // Assuming your middl
  * @access  Protected (Requires verifyToken middleware)
  */
 router.get('/getNotifications', verifyToken, async (req, res) => {
-    // 💡 The verifyToken middleware ensures req.user is available and populated with { _id, role, ... }
+    // The verifyToken middleware ensures req.user is available and populated with { _id, role, ... }
     const currentUser = req.user; 
     
-    if (!currentUser) {
-        // This should theoretically not happen if verifyToken succeeds
-        return res.status(401).json({ message: 'Unauthorized: User data not found.' });
+    // Safety check: ensure the middleware is functioning and user data is present
+    if (!currentUser || !currentUser._id || !currentUser.role) {
+        return res.status(401).json({ message: 'Unauthorized: User data not attached by token middleware.' });
     }
 
     let query = {};
@@ -24,12 +26,10 @@ router.get('/getNotifications', verifyToken, async (req, res) => {
             // --- ADMIN LOGIC ---
             // Admins need to see all payment success notifications
             query = { targetRole: 'Admin' }; 
-            console.log(`Admin ${currentUser._id} fetching all Admin notifications.`);
         } else {
             // --- NORMAL USER LOGIC ---
             // Normal users need to see notifications specifically targeted to their ID
             query = { targetUserId: currentUser._id, targetRole: 'User' }; 
-            console.log(`User ${currentUser._id} fetching user-specific notifications.`);
         }
 
         // Fetch notifications based on the filtered query, newest first
