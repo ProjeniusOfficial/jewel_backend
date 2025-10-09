@@ -1,12 +1,13 @@
+// routes/auth.js
+
 const router = require('express').Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const adminNumber = "9159143736";
+const adminNumber = "9159143736"; // The dedicated Admin Mobile Number
 
 // REGISTER route remains the same as before...
 router.post('/register', async (req, res) => {
-    // ... no changes needed here
     try {
         const existingUser = await User.findOne({ mobileNumber: req.body.mobileNumber });
         if (existingUser) {
@@ -28,38 +29,46 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// LOGIN route is updated
+// LOGIN route - Finalized for Frontend Compatibility
 router.post('/login', async (req, res) => {
     try {
         const user = await User.findOne({ mobileNumber: req.body.mobileNumber });
         if (!user) {
-            return res.status(404).json({ message: "User not found!" }); // Changed to JSON for consistency
+            return res.status(404).json({ message: "User not found!" });
         }
 
         const validMpin = await bcrypt.compare(req.body.mpin, user.mpin);
         if (!validMpin) {
-            return res.status(400).json({ message: "Wrong MPIN!" }); // Changed to JSON for consistency
+            return res.status(400).json({ message: "Wrong MPIN!" });
         }
         
-        // **CORRECT**: Include user role and ID in the JWT payload
+        // Create JWT with ID and Role (needed for verifyToken middleware)
         const accessToken = jwt.sign(
             { id: user._id, role: user.role }, 
             process.env.JWT_SECRET,
             { expiresIn: "3d" }
         );
 
-        // Extract necessary fields from user document
-        const { mpin, ...others } = user._doc;
+        // Extract data, excluding sensitive MPIN
+        const { mpin, mobileNumber, ...others } = user._doc;
+        
+        // 💡 CRITICAL FIX: Construct the final user object for the frontend.
+        // We include mobileNumber directly, AND add a 'mobile' alias because 
+        // the frontend console log previously showed a reliance on 'mobile'.
+        const userObject = {
+            ...others,
+            _id: user._id, // Ensure _id is present (though usually in others)
+            mobileNumber: mobileNumber, // The correct DB field name
+            mobile: mobileNumber, // Alias for frontend compatibility (e.g., JoinScheme.js)
+            role: user.role
+        };
 
-        // 💡 CRITICAL FRONTEND FIX: Ensure the accessToken is attached to the user object 
-        // that is saved to AsyncStorage, allowing it to be retrieved in JoinScheme.js 
-        // as 'user.token' (if you choose to use it for API calls later) and making 
-        // sure the mobile number is correctly included.
-
-        res.status(200).json({ ...others, accessToken });
+        // 🛑 Final Response: The access token is returned at the root level, 
+        // allowing NotificationContext.js to find it using parsed.accessToken.
+        res.status(200).json({ user: userObject, accessToken: accessToken });
 
     } catch (err) {
-        console.error(err); // Log the error for debugging
+        console.error("Login Error:", err); 
         res.status(500).json({ message: "Internal server error" });
     }
 });
