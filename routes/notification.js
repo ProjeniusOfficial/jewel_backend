@@ -1,3 +1,5 @@
+// JEWEL_BACKEND/routes/notification.js (FINAL CORRECTED VERSION)
+
 const router = require('express').Router();
 const Notification = require('../models/Notification');
 const { verifyToken } = require('../middleware/verifyToken'); 
@@ -13,20 +15,21 @@ router.get('/getNotifications', verifyToken, async (req, res) => {
     
     const currentUser = req.user; 
     
+    // 💡 FIX: Use currentUser.id, which comes from the JWT payload
+    const userId = currentUser.id; 
+    const role = currentUser.role;
+    
     // --- 1. Authentication Check ---
-    if (!currentUser || !currentUser._id || !currentUser.role) {
-        // If the token was invalid, verifyToken should have already sent 401/403.
-        // This case handles if the token was valid but the payload was missing essential data (unlikely).
-        console.error(`[BACKEND ERROR] AUTH: Token passed but user data is incomplete or missing. User payload: ${JSON.stringify(currentUser)}`);
-        return res.status(401).json({ message: 'Unauthorized: Incomplete token data.' });
+    if (!userId || !role) {
+        // This log should now only trigger if the token is completely missing or malformed
+        console.error(`[BACKEND ERROR] AUTH: Token passed but ID/Role is missing. User payload: ${JSON.stringify(currentUser)}`);
+        return res.status(401).json({ message: 'Unauthorized: Missing User ID or Role.' });
     }
     
     // 💡 Logging Authentication Success
-    console.log(`[BACKEND LOG] AUTH: Token verified for User ID: ${currentUser._id}, Role: ${currentUser.role}`);
+    console.log(`[BACKEND LOG] AUTH: Token verified for User ID: ${userId}, Role: ${role}`);
 
     let query = {};
-    const role = currentUser.role;
-    const userId = currentUser._id;
 
     try {
         // --- 2. Filtering Logic ---
@@ -35,10 +38,12 @@ router.get('/getNotifications', verifyToken, async (req, res) => {
             console.log(`[BACKEND LOG] QUERY: Filtering for ALL Admin notifications.`);
         } else {
             // Normal User
+            // 💡 FIX: targetUserId now uses the corrected userId variable (which is currentUser.id)
             query = { targetUserId: userId, targetRole: 'User' };
             console.log(`[BACKEND LOG] QUERY: Filtering for specific User ID: ${userId}.`);
         }
 
+        // The query runs here
         const notifications = await Notification.find(query)
             .sort({ createdAt: -1 });
             
